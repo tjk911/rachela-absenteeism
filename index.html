@@ -1,128 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
 
-<script src='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
-<link href='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
 
-<div id='map'></div>
-<div class='map-overlay' id='features'><h2>Salem-Keizer Schools Chronic Absenteeism</h2><div id='pd'><p>Hover over a school to view its rate</p></div></div>
-<div class='map-overlay' id='legend'></div>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-<style>
+    h2,
+    h3 {
+      margin: 10px;
+      font-size: 1.2em;
+    }
 
-body {
-  margin: 0;
-  padding: 0;
-}
+    h3 {
+      font-size: 1em;
+    }
 
-h2,
-h3 {
-  margin: 10px;
-  font-size: 1.2em;
-}
+    p {
+      font-size: 0.85em;
+      margin: 10px;
+      text-align: left;
+    }
 
-h3 {
-  font-size: 1em;
-}
+    /**
+    * Create a position for the map
+    * on the page */
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
 
-p {
-  font-size: 0.85em;
-  margin: 10px;
-  text-align: left;
-}
+    /**
+    * Set rules for how the map overlays
+    * (info box and legend) will be displayed
+    * on the page. */
+    .map-overlay {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.8);
+      margin-right: 20px;
+      font-family: Arial, sans-serif;
+      overflow: auto;
+      border-radius: 3px;
+    }
 
-/**
-* Create a position for the map
-* on the page */
-#map {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-}
+    #features {
+      top: 0;
+      height: 150px;
+      margin-top: 20px;
+      width: 250px;
+    }
 
-/**
-* Set rules for how the map overlays
-* (info box and legend) will be displayed
-* on the page. */
-.map-overlay {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.8);
-  margin-right: 20px;
-  font-family: Arial, sans-serif;
-  overflow: auto;
-  border-radius: 3px;
-}
+    #legend {
+      padding: 10px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      line-height: 18px;
+      height: 100px;
+      margin-bottom: 40px;
+      width: 100px;
+    }
 
-#features {
-  top: 0;
-  height: 150px;
-  margin-top: 20px;
-  width: 250px;
-}
+    .legend-key {
+      display: inline-block;
+      border-radius: 20%;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+    }
+    </style>
 
-#legend {
-  padding: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  line-height: 18px;
-  height: 100px;
-  margin-bottom: 40px;
-  width: 100px;
-}
+</head>
+<body>
+    <div id='map'></div>
+    <div class='map-overlay' id='features'><h2>Salem-Keizer Schools Chronic Absenteeism</h2><div id='pd'><p>Hover over a school to view its rate</p></div></div>
+    <div class='map-overlay' id='legend'></div>
 
-.legend-key {
-  display: inline-block;
-  border-radius: 20%;
-  width: 10px;
-  height: 10px;
-  margin-right: 5px;
-}
+    <script> 
 
-</style>
+        mapboxgl.accessToken = 'pk.eyJ1IjoicmFjaGVsd2FsZXhhbmRlciIsImEiOiJPSDZXamhvIn0.GoeBZov3YPMVVr-gH_djbw' ;
 
-<script> 
-
-    mapboxgl.accessToken = 'pk.eyJ1IjoicmFjaGVsd2FsZXhhbmRlciIsImEiOiJPSDZXamhvIn0.GoeBZov3YPMVVr-gH_djbw' ;
-
-    var map = new mapboxgl.Map({
-        container: 'map', // container id
-        style: 'mapbox://styles/rachelwalexander/cjlr67dq88cp42roa2iw0y3o8' // replace this with your style URL
-        });
-
-    map.on('load', function() {
-        var layers = ['Under 15%', '15-18%', '18-20%', '20-25%', '25%+'];
-        var colors = ['#3b9721', '#80b11c', '#cbb716', '#e56c0c', '#ff0000',];
-
-        for (i = 0; i < layers.length; i++) {
-            var layer = layers[i];
-            var color = colors[i];
-            var item = document.createElement('div');
-            var key = document.createElement('span');
-            key.className = 'legend-key';
-            key.style.backgroundColor = color;
-
-            var value = document.createElement('span');
-            value.innerHTML = layer;
-            item.appendChild(key);
-            item.appendChild(value);
-            legend.appendChild(item);
-
-            map.on('mousemove', function(e) {
-                var schools = map.queryRenderedFeatures(e.point, {
-                layers: ['absenteeism']
-                });
-
-                if (schools.length > 0) {
-                    document.getElementById('pd').innerHTML = '<h3><strong>' + schools[0].properties.absentee_cleaned_SCHOOL + '</strong></h3><p><strong><em>' + schools[0].properties.pctabsent_all_students + '</strong> percent of students chronically absent</em></p>';
-                } 
-                else {
-                    document.getElementById('pd').innerHTML = '<p>Hover over a school to see its chronic absenteeism rate.</p>';
-                }
+        var map = new mapboxgl.Map({
+            container: 'map', // container id
+            style: 'mapbox://styles/rachelwalexander/cjlr67dq88cp42roa2iw0y3o8' // replace this with your style URL
             });
-        }
-            map.getCanvas().style.cursor = 'default';
 
-    });
+        map.on('load', function() {
+            var layers = ['Under 15%', '15-18%', '18-20%', '20-25%', '25%+'];
+            var colors = ['#3b9721', '#80b11c', '#cbb716', '#e56c0c', '#ff0000',];
 
+            for (i = 0; i < layers.length; i++) {
+                var layer = layers[i];
+                var color = colors[i];
+                var item = document.createElement('div');
+                var key = document.createElement('span');
+                key.className = 'legend-key';
+                key.style.backgroundColor = color;
 
-</script>
+                var value = document.createElement('span');
+                value.innerHTML = layer;
+                item.appendChild(key);
+                item.appendChild(value);
+                legend.appendChild(item);
+
+                map.on('mousemove', function(e) {
+                    var schools = map.queryRenderedFeatures(e.point, {
+                    layers: ['absenteeism']
+                    });
+
+                    if (schools.length > 0) {
+                        document.getElementById('pd').innerHTML = '<h3><strong>' + schools[0].properties.absentee_cleaned_SCHOOL + '</strong></h3><p><strong><em>' + schools[0].properties.pctabsent_all_students + '</strong> percent of students chronically absent</em></p>';
+                    } 
+                    else {
+                        document.getElementById('pd').innerHTML = '<p>Hover over a school to see its chronic absenteeism rate.</p>';
+                    }
+                });
+            }
+                map.getCanvas().style.cursor = 'default';
+
+        });
+    </script>
+</body>
+</html>
